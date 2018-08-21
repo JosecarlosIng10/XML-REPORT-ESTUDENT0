@@ -1,0 +1,241 @@
+package analisis;
+
+import java_cup.runtime.Symbol;
+
+
+//PARSER 
+parser code
+{://Codigo visible
+     public String ESintacticos="";
+     public String cadenajava="";
+     ListaEstudiantes listaestudiante = new ListaEstudiantes();
+     ListaPonderacion listaponderacion = new ListaPonderacion();
+    
+     public int car=0;
+     public String nom="";
+     public String ape="";
+     public String act="";
+
+     public int a=0;
+     public int b=0;
+     public int c=0;
+     public int d=0;
+
+
+
+    public void syntax_error(Symbol s){
+        ESintacticos+="Error sintaxis: "+ s.value +" Linea "+(s.left+1)+" columna "+(s.right+1)+"\n";
+        System.out.println("Error sintaxis: "+ s.value +" Linea "+(s.left+1)+" columna "+(s.right+1)+"\n");
+    }
+
+    public void unrecovered_syntax_error(Symbol s) throws java.lang.Exception{ 
+        ESintacticos+= "";
+       
+
+    }
+
+    public int geta()
+    {
+        return a;
+    }
+    public int getb()
+    {
+        return b;
+    }
+    public int getc()
+    {
+        return c;
+    }
+     public int getd()
+    {
+        return d;
+    }
+
+:}
+
+action code
+{://Codigo de usuario
+    
+   
+:}
+
+
+terminal String encabezados,num,id,cadena,cuerpos,estudiante,carnet,nombres,apellidos,fincuerpos,cuerpostyle, ponderacion, finponderacion,valor, porcentaje, reporte, estilo,finestilo,finreportes;
+terminal abre, cierra, dospuntos,igual,cierrasolo,abresolo,coma;
+nonterminal String INICIO, S, LSENT, SENT , ENCABEZADO, LPOSICION, POSICION, CUERPO, LEST, EST, DATOS,DAT,LACTIVIDADES,PONDERACIONS, LIDENTIFICADOR,IDENTIFICADOR,REPORTES,LTIPO,TIPO,ESTILOS,ENCABEZADOESTILOS,CUERPOESTILOS,LATRIBUTOS ;  
+
+start with INICIO;  
+
+INICIO ::= S{:
+listaestudiante.setlistaponderacion(listaponderacion);
+listaestudiante.calcularnotas();
+listaestudiante.imprimirestudiantes(); 
+listaponderacion.imprimirponderacion();
+listaestudiante.reporteaprobados();
+listaestudiante.reportereprobados();
+listaestudiante.reportemejores();
+
+:};
+
+
+S ::= LSENT;
+
+LSENT ::= LSENT SENT 
+        | SENT
+        | error SENT;
+
+SENT ::= ENCABEZADO
+        | CUERPO
+        | PONDERACIONS
+        | REPORTES
+        | ESTILOS
+        ;
+
+ENCABEZADO ::= abre encabezados LPOSICION:lpos cierra
+{:
+
+    String posi[]= lpos.split("#");
+    String i1="", i2="", i3="", d1="", d2="", d3="";
+    
+    for (int i=0; i<posi.length;i++)
+{
+    String ver[] = posi[i].split("=");
+    if (ver[0].equals("superior-izq"))
+    {
+        i1=ver[1];
+    }
+    else if (ver[0].equals("centro-izq"))
+    {
+        i2=ver[1];
+    }
+    else if (ver[0].equals("inferior-izq"))
+    {
+        i3=ver[1];
+    }
+    else if (ver[0].equals("superior-der"))
+    {
+        d1=ver[1];
+    }   
+    else if (ver[0].equals("centro-der"))
+    {
+        d2=ver[1];
+    }
+    else if (ver[0].equals("inferior-der"))
+    {
+        d3=ver[1];
+    }
+
+}
+
+listaestudiante.encabezado(i1,i2,i3,d1,d2,d3);
+
+:};
+
+LPOSICION ::= LPOSICION:pos1 POSICION:pos2{:RESULT= pos1 + "#"+pos2;:}
+            | POSICION:pos{:RESULT= pos;:};
+
+POSICION ::= id:pos dospuntos id:id1 igual cadena:id2
+{:
+RESULT= pos +"="+id1+": "+id2;
+
+:}
+        |  id:pos dospuntos id:id1 igual num:id2
+{:
+    RESULT= pos +"="+ id1 +": " + id2;
+:};
+
+CUERPO ::=  cuerpos  LEST  fincuerpos ;
+
+LEST ::= LEST EST
+        | EST;
+
+EST ::= abre estudiante DATOS  LACTIVIDADES:ac cierra
+{:
+    act= ac;
+
+Estudiante nuevo = new Estudiante();
+nuevo.carnet = car;
+nuevo.nombre=nom;
+nuevo.apellidos=ape;
+nuevo.notas = act;
+
+listaestudiante.GuardarEstudiante(nuevo);
+
+
+:};
+
+
+DATOS ::= carnet igual num:n  coma DAT{:car=Integer.parseInt(n) ;:};
+
+DAT ::= DAT coma apellidos igual cadena:a coma{:ape=a;:}
+    | nombres igual cadena:n{:nom=n;:};
+
+LACTIVIDADES ::= LACTIVIDADES:ac coma id:id igual num:n{:RESULT= ac + "," + id + "=" + n;:} 
+        | id:id igual num:n{:RESULT = id +"="+n;:};
+
+PONDERACIONS ::= ponderacion LIDENTIFICADOR finponderacion;
+
+LIDENTIFICADOR ::= LIDENTIFICADOR IDENTIFICADOR
+                | IDENTIFICADOR;
+
+IDENTIFICADOR ::= abre id:id valor igual porcentaje:val cierra
+    {:
+        Ponderacion nuevo = new Ponderacion();
+        nuevo.actividad = id;
+        String num = val.replace("%","");
+        nuevo.valor=  Integer.parseInt(num);
+        
+        listaponderacion.GuardarPonderacion(nuevo);
+
+    :};
+
+REPORTES ::= reporte LTIPO finreportes;
+
+LTIPO ::= LTIPO TIPO
+       | TIPO;
+
+TIPO ::= id:reporte igual id:val
+{:
+    if ((reporte.equals("ra")) && (val.equals("true"))){a=1;}
+    else if ((reporte.equals("rr")) && (val.equals("true"))){b=1;}
+    else if ((reporte.equals("rp")) && (val.equals("true"))){c=1;}
+    else if ((reporte.equals("re")) && (val.equals("true"))){d=1;}
+
+
+:};
+
+ESTILOS ::= estilo ENCABEZADOESTILOS CUERPOESTILOS finestilo;
+
+ENCABEZADOESTILOS ::= abre encabezados LATRIBUTOS:latri cierra
+{:
+    String list[] = latri.split(",");
+    
+for (int i=0;i<list.length;i++)
+    {
+        String dat[] = list[i].split("=");
+        if (dat[0].equals("color-t"))
+        {
+             String d = dat[1].replace("\"", "");
+            listaestudiante.setColort(d);
+        }
+        else if (dat[0].equals("color-v"))
+        {
+           String d = dat[1].replace("\"", "");
+            listaestudiante.setColorv(d);
+        }
+    }
+
+
+:};
+
+CUERPOESTILOS ::= abre cuerpostyle LATRIBUTOS cierra;
+
+LATRIBUTOS ::= LATRIBUTOS:l1 coma id:id1 igual cadena:id2{:RESULT= l1+","+id1+"="+id2;:}
+            | LATRIBUTOS:l1 coma id:id1 igual id:id2{:RESULT= l1+","+id1+"="+id2;:}
+            | id:id1 igual cadena:id2{:RESULT= id1+"="+id2;:}
+            | id:id1 igual id:id2{:RESULT= id1+"="+id2;:};
+
+
+
+
+
